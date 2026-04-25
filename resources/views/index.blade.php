@@ -17,7 +17,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">System Logs</h1>
-                <p class="text-sm text-gray-500">Viewing: {{ storage_path('logs/laravel.log') }}</p>
+                {{-- <p class="text-sm text-gray-500">Viewing: {{ storage_path('logs/laravel.log') }}</p> --}}
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
@@ -42,6 +42,15 @@
                         Clear Logs
                     </button>
                 </form>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <form action="{{ route('log-viewer.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 

@@ -6,7 +6,6 @@
     <title>Laravel Log Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom scrollbar for the stack trace */
         pre::-webkit-scrollbar { height: 8px; }
         pre::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
     </style>
@@ -16,37 +15,49 @@
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800">System Logs</h1>
-                {{-- <p class="text-sm text-gray-500">Viewing: {{ storage_path('logs/laravel.log') }}</p> --}}
+                <h1 class="text-2xl font-bold text-gray-800">Laravel Log Viewer</h1>
+                <p class="text-sm text-gray-500">
+                    Developed by: 
+                    <a href="mailto:fahimsultan4@gmail.com" class="text-blue-600 hover:underline font-medium">
+                        Sultanul Arefin
+                    </a>
+                </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
+                <form action="" method="GET" id="perPageForm" class="flex items-center gap-2">
+                    @foreach(request()->except(['per_page', 'page']) as $key => $value)
+                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                    @endforeach
+                    <label for="per_page" class="text-sm text-gray-600 font-medium whitespace-nowrap">Show:</label>
+                    <select name="per_page" id="per_page" onchange="this.form.submit()"
+                            class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                        @foreach([10, 15, 20, 30, 40, 50] as $val)
+                            <option value="{{ $val }}" {{ ($perPage ?? 15) == $val ? 'selected' : '' }}>{{ $val }}</option>
+                        @endforeach
+                    </select>
+                </form>
+
                 <form action="" method="GET" class="flex gap-2">
+                    <input type="hidden" name="per_page" value="{{ $perPage ?? 15 }}">
                     <input type="text" name="search" value="{{ request('search') }}" 
-                           placeholder="Search logs..." 
-                           class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                        Search
-                    </button>
-                    @if(request('search'))
-                        <a href="{{ route('log-viewer.index') }}" class="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition">
-                            Reset
-                        </a>
-                    @endif
+                        placeholder="Search logs..." 
+                        class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700 transition text-sm">Search</button>
                 </form>
 
-                <form action="{{ route('log-viewer.clear') }}" method="POST" onsubmit="return confirm('Are you sure you want to clear all logs? This cannot be undone.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition font-medium">
-                        Clear Logs
-                    </button>
-                </form>
+                <div class="flex gap-2">
+                    <form action="{{ route('log-viewer.clear') }}" method="POST" onsubmit="return confirm('Clear all logs?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition font-medium text-sm">
+                            Clear
+                        </button>
+                    </form>
 
-                <div class="flex flex-wrap items-center gap-3">
                     <form action="{{ route('log-viewer.logout') }}" method="POST">
                         @csrf
-                        <button type="submit" class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition font-medium">
+                        <button type="submit" class="bg-gray-700 text-white px-4 py-1 rounded-lg hover:bg-gray-800 transition font-medium text-sm">
                             Logout
                         </button>
                     </form>
@@ -74,9 +85,7 @@
                     <tbody class="divide-y divide-gray-200">
                         @forelse($logs as $log)
                             <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap font-mono">
-                                    {{ $log['date'] }}
-                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap font-mono">{{ $log['date'] }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="inline-block px-3 py-1 text-[10px] font-black rounded-full uppercase tracking-tighter
                                         {{ $log['class'] == 'danger' ? 'bg-red-100 text-red-700 border border-red-200' : '' }}
@@ -93,12 +102,10 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm">
                                     <div class="text-gray-800 font-medium leading-relaxed">{{ $log['message'] }}</div>
-                                    
                                     @if(isset($log['full']) && strlen($log['full']) > strlen($log['message']) + 20)
                                         <details class="mt-3 group">
                                             <summary class="text-xs text-blue-600 hover:text-blue-800 cursor-pointer font-semibold list-none flex items-center gap-1">
-                                                <span class="group-open:rotate-90 transition-transform">▶</span> 
-                                                Stack Trace
+                                                <span class="group-open:rotate-90 transition-transform">▶</span> Stack Trace
                                             </summary>
                                             <div class="mt-2 relative">
                                                 <pre class="p-4 bg-gray-900 text-gray-300 rounded-lg text-xs leading-5 overflow-x-auto border border-gray-700 shadow-inner max-h-96">{{ $log['full'] }}</pre>
@@ -108,14 +115,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="4" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center">
-                                        <span class="text-4xl mb-2 text-gray-300">∅</span>
-                                        <p class="text-gray-500 font-medium">No logs found matching your criteria.</p>
-                                    </div>
-                                </td>
-                            </tr>
+                            <tr><td colspan="4" class="px-6 py-12 text-center text-gray-500">No logs found.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -123,7 +123,7 @@
         </div>
 
         <div class="mt-8">
-            {{ $logs->links() }}
+            {{ $logs->appends(request()->query())->links() }}
         </div>
     </div>
 </body>
